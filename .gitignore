@@ -34,6 +34,7 @@ gradle-app.setting
 ##############################
 ## IntelliJ
 ##############################
+.idea
 out/
 .idea/
 .idea_modules/

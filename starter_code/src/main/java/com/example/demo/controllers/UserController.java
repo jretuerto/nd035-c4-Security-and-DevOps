@@ -5,6 +5,8 @@ import com.example.demo.model.persistence.User;
 import com.example.demo.model.persistence.repositories.CartRepository;
 import com.example.demo.model.persistence.repositories.UserRepository;
 import com.example.demo.model.requests.CreateUserRequest;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +24,8 @@ public class UserController {
 
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+	private static final Logger logger = LogManager.getLogger(UserController.class);
 
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id) {
@@ -41,12 +45,18 @@ public class UserController {
 		Cart cart = new Cart();
 		cartRepository.save(cart);
 		user.setCart(cart);
-		if(createUserRequest.getPassword().length()<7 ||
-				!createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())){
+
+		if(createUserRequest.getPassword().length()<7) {
+			logger.error("Password length required at least 7 characters. User not created: " + createUserRequest.getUsername());
+			return ResponseEntity.badRequest().build();
+		} else if (!createUserRequest.getPassword().equals(createUserRequest.getConfirmPassword())){
+			logger.error("Password does not match with confirmation. User not created: " + createUserRequest.getUsername());
 			return ResponseEntity.badRequest().build();
 		}
+
 		user.setPassword(bCryptPasswordEncoder.encode(createUserRequest.getPassword()));
 		userRepository.save(user);
+		logger.info("User created successes: " + user.getUsername());
 		return ResponseEntity.ok(user);
 	}
 }
